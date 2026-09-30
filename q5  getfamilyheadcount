@@ -1,0 +1,19 @@
+uint64
+sys_getfamilyheadcount(void)
+{
+    int count = 0;
+    struct proc *current = myproc();
+    struct proc *p;
+
+    for (p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+
+        if (p->parent == current && p->state != UNUSED) {
+            count++;
+        }
+
+        release(&p->lock);
+    }
+
+    return count;
+}
