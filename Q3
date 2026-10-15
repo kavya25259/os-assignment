@@ -1,0 +1,38 @@
+uint64
+sys_lineage(void)
+{
+    int pid;
+    argint(0, &pid);
+    struct proc *p;
+    struct proc *parent;
+    int count = 0;
+    char name[16];
+
+    for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->state != UNUSED && p->pid == pid)
+            break;
+        release(&p->lock);
+    }
+    if(p == &proc[NPROC])
+        return -1;
+    while(1) {
+        int current_pid = p->pid;
+        safestrcpy(name, p->name, sizeof(name));
+        parent = p->parent;
+        release(&p->lock);
+        printk("PID %d: %s\n", current_pid, name);
+        count++;
+        if(current_pid == 1)
+            break;
+        if(parent == 0)
+            break;
+        p = parent;
+        acquire(&p->lock);
+        if(p->state == UNUSED) {
+            release(&p->lock);
+            break;
+        }
+    }
+    return count;
+}
